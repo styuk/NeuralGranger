@@ -483,16 +483,12 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
 
         cmlp.zero_grad()
 
-
         # Calculate loss for next iteration.
         loss = sum([loss_fn(cmlp.networks[i](X[:, :-1]), X[:, lag:, i:i+1])
                     for i in range(p)])
         ridge = sum([ridge_regularize(net, lam_ridge) for net in cmlp.networks])
         smooth = loss + ridge
 
-        print('loss = %f' % loss)
-        print('smooth = %f' % smooth)
-        print('ridge = %f' % ridge)
 
         # Check progress.
         if (it + 1) % check_every == 0:
@@ -504,10 +500,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
 
             if verbose > 0:
                 print(('-' * 10 + 'Iter = %d' + '-' * 10) % (it + 1))
-                print('Loss = %f' % mean_loss)
-                print('smooth = %f' % smooth)
-                print('nonsmooth = %f' % nonsmooth)
-                print('p = %f' % p)
+                print('cmlp.GC() = %f' % cmlp.GC())
                 print('Variable usage = %.2f%%'
                       % (100 * torch.mean(cmlp.GC().float())))
 

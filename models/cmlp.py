@@ -466,6 +466,10 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
     ridge = sum([ridge_regularize(net, lam_ridge) for net in cmlp.networks])
     smooth = loss + ridge
 
+    print('net = %f' % net)
+    print('smooth = %f' % smooth)
+    print('ridge = %f' % ridge)
+
     for it in range(max_iter):
         # Take gradient step.
         smooth.backward()

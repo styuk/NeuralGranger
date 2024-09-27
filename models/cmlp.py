@@ -503,6 +503,14 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                 print('cmlp.GC() =\n', cmlp.GC())
                 print('Variable usage = %.2f%%'
                       % (100 * torch.mean(cmlp.GC().float())))
+                
+            # Check for diagonal elements
+            gc_tensor = cmlp.GC()
+            diagonal_elements = gc_tensor.diagonal()  # 対角要素を取得
+            if (diagonal_elements == 0).any():  # もし0があれば
+                if verbose:
+                    print('Diagonal elements became zero, stopping iteration.')
+                break  # ループを終了
 
             # Check for early stopping.
             if mean_loss < best_loss:

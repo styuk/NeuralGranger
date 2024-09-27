@@ -483,7 +483,6 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
 
         cmlp.zero_grad()
 
-        print('cmlp.zero_grad() = %f' % cmlp.zero_grad())
 
         # Calculate loss for next iteration.
         loss = sum([loss_fn(cmlp.networks[i](X[:, :-1]), X[:, lag:, i:i+1])

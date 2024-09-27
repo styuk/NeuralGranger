@@ -500,7 +500,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
 
             if verbose > 0:
                 print(('-' * 10 + 'Iter = %d' + '-' * 10) % (it + 1))
-                print('cmlp.GC() = %f' % cmlp.GC())
+                print('cmlp.GC() =\n', cmlp.GC())
                 print('Variable usage = %.2f%%'
                       % (100 * torch.mean(cmlp.GC().float())))
 

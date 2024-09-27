@@ -500,30 +500,24 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
 
             if verbose > 0:
                 print(('-' * 10 + 'Iter = %d' + '-' * 10) % (it + 1))
+                print('mean_loss =\n', mean_loss)
                 print('cmlp.GC() =\n', cmlp.GC())
                 print('Variable usage = %.2f%%'
                       % (100 * torch.mean(cmlp.GC().float())))
-                
+            
+
             # Check for diagonal elements
             gc_tensor = cmlp.GC()
             diagonal_elements = gc_tensor.diagonal()  # 対角要素を取得
+            cmlp_1 = cmlp
+            best_model = deepcopy(cmlp_1)    
             if (diagonal_elements == 0).any():  # もし0があれば
                 if verbose:
                     print('Diagonal elements became zero, stopping iteration.')
                 break  # ループを終了
 
-            # Check for early stopping.
-            if mean_loss < best_loss:
-                best_loss = mean_loss
-                best_it = it
-                best_model = deepcopy(cmlp)
-            elif (it - best_it) == lookback * check_every:
-                if verbose:
-                    print('Stopping early')
-                break
-
     # Restore best model.
-    restore_parameters(cmlp, best_model)
+    restore_parameters(cmlp_1, best_model)
 
     return train_loss_list
 

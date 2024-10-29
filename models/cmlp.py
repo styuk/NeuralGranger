@@ -448,7 +448,7 @@ def train_model_adam(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
 
 
 def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
-                     lookback=5, check_every=100, verbose=1):
+                     lookback=5, check_every=100, verbose=1, diag=0):
     '''Train model with Adam.'''
     lag = cmlp.lag
     p = X.shape[-1]
@@ -510,13 +510,14 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
             gc_tensor = cmlp.GC()
             diagonal_elements = gc_tensor.diagonal()  # 対角要素を取得
             # Save model before diagonal elements become zero
-            if (diagonal_elements == 0).any():  # もし0があれば
-                if verbose:
-                    print('Diagonal elements became zero, stopping iteration.')
-                break  # ループを終了
-            else:
-                # 対角成分が0にならない場合はモデルを保存
-                best_model = deepcopy(cmlp)  # ここで保存する
+            if diag==1:
+                if (diagonal_elements == 0).any():  # もし0があれば
+                    if verbose:
+                        print('Diagonal elements became zero, stopping iteration.')
+                    break  # ループを終了
+                else:
+                    # 対角成分が0にならない場合はモデルを保存
+                    best_model = deepcopy(cmlp)  # ここで保存する
             
             # Check for early stopping.
             if mean_loss < best_loss:

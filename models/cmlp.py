@@ -508,6 +508,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
             else:
                 no_change_count = 0  # 変化があればリセット
             prev_variable_usage = current_variable_usage  # 次のループのために更新
+            print('No change count = %.2f%%' % no_change_count)
             
             # early stoppingの仕方を決める
             if tolerance==0:
@@ -525,7 +526,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                     if verbose:
                         print('Stopping early')
                     break 
-                
+
                 # variable_usageが変化しない場合の早期停止
                 elif no_change_count >= stop_no_change_count:
                     if verbose:

@@ -448,7 +448,7 @@ def train_model_adam(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
 
 
 def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
-                     lookback=5, check_every=100, verbose=1,tolerance=0,stopit=300):
+                     lookback=5, check_every=100, verbose=1,tolerance=0,stopit=300,stop_count=10000):
     '''Train model with Adam.'''
     lag = cmlp.lag
     p = X.shape[-1]
@@ -492,12 +492,22 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                              for net in cmlp.networks])
             mean_loss = (smooth + nonsmooth) / p
             train_loss_list.append(mean_loss.detach())
+            
+            no_change_count = 0  # variable_usageが変化しない回数をカウント
+            stop_no_change_count = stop_count  # 停止条件としての無変化回数の閾値
 
             if verbose > 0:
                 print(('-' * 10 + 'Iter = %d' + '-' * 10) % (it + 1))
                 print('Loss = %f' % mean_loss)
-                print('Variable usage = %.2f%%'
-                      % (100 * torch.mean(cmlp.GC().float())))
+                current_variable_usage = 100 * torch.mean(cmlp.GC().float())
+                print('Variable usage = %.2f%%' % current_variable_usage)
+
+            # variable_usageの変化をチェック
+            if 'prev_variable_usage' in locals() and current_variable_usage == prev_variable_usage:
+                no_change_count += 1
+            else:
+                no_change_count = 0  # 変化があればリセット
+            prev_variable_usage = current_variable_usage  # 次のループのために更新
             
             # early stoppingの仕方を決める
             if tolerance==0:
@@ -514,7 +524,14 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                 elif (it - best_it) == stopit:
                     if verbose:
                         print('Stopping early')
+                    break 
+                
+                # variable_usageが変化しない場合の早期停止
+                elif no_change_count >= stop_no_change_count:
+                    if verbose:
+                        print(f'Stopping early due to no change in variable usage for {stop_no_change_count} iterations')
                     break
+
             else:
                 print('tolerance = %f' % tolerance)
                 # Check for early stopping

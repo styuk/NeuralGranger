@@ -500,7 +500,8 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                       % (100 * torch.mean(cmlp.GC().float())))
             
             # early stoppingの仕方を決める
-            if tolerance=0:
+            if tolerance==0:
+                print('tolerance is None')
                 # Check for early stopping.
                 if round(mean_loss, 7) < round(best_loss, 7):
                     best_loss = mean_loss
@@ -515,6 +516,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                         print('Stopping early')
                     break
             else:
+                print('tolerance = %f' % tolerance)
                 # Check for early stopping
                 if round(mean_loss, 7) < round(best_loss, 7):
                     best_loss = mean_loss

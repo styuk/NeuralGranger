@@ -507,7 +507,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                 print(('-' * 10 + 'Iter = %d' + '-' * 10) % (it + 1))
                 print('Loss = %f' % mean_loss)
                 print('Variable usage = %.2f%%' % current_variable_usage)
-                print('No change count = %f' % no_change_count)
+                print('No change count = %d' % no_change_count)
 
             # early stoppingの仕方を決める
             if tolerance==0:
@@ -518,7 +518,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                     best_it = it
                     best_model = deepcopy(cmlp)
                     # variable_usageが変化しない場合の早期停止
-                    if no_change_count >= stop_no_change_count:
+                    if no_change_count >= stop_no_change_count + 1:
                         if verbose:
                             print(f'Stopping early due to no change in variable usage for {stop_no_change_count} iterations')
                         break

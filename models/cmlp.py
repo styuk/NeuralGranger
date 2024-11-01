@@ -448,7 +448,7 @@ def train_model_adam(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
 
 
 def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
-                     lookback=5, check_every=100, verbose=1,tolerance=0,stopit=300,stop_count=10000):
+                     lookback=5, check_every=100, verbose=1,tolerance=0,stopit=300,stop_count=10000,stop_count_loss=5000):
     '''Train model with Adam.'''
     lag = cmlp.lag
     p = X.shape[-1]
@@ -460,7 +460,9 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
     best_loss = np.inf
     best_model = None
     no_change_count = 0  # variable_usageが変化しない回数をカウント
-    stop_no_change_count = stop_count  # 停止条件としての無変化回数の閾値
+    no_change_count_loss = 0
+    stop_no_change_count = stop_count
+    stop_no_change_count_loss = stop_count_loss  # 停止条件としての無変化回数の閾値
 
     # Calculate smooth error.
     loss = sum([loss_fn(cmlp.networks[i](X[:, :-1]), X[:, lag:, i:i+1])
@@ -487,13 +489,23 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
         ridge = sum([ridge_regularize(net, lam_ridge) for net in cmlp.networks])
         smooth = loss + ridge
         current_variable_usage = 100 * torch.mean(cmlp.GC().float())
+        current_mean_loss = mean_loss.item()  # Tensorをスカラーに変換
 
-        # variable_usageの変化をチェック
+
+        ######### variable_usageの変化をチェック ###############
         if 'prev_variable_usage' in locals() and current_variable_usage == prev_variable_usage:
             no_change_count += 1
         else:
             no_change_count = 0  # 変化があればリセット
         prev_variable_usage = current_variable_usage  # 次のループのために更新
+
+        ########## mean_lossの変化をチェック ################
+        if 'prev_mean_loss' in locals() and abs(current_mean_loss - prev_mean_loss) <= 0.0000001:
+            no_change_count_loss += 1
+        else:
+            no_change_count_loss = 0  # 変化があればリセット
+        prev_mean_loss = current_mean_loss  # 次のループのために更新
+        
         
         # Check progress. 
         if (it + 1) % check_every == 0:
@@ -505,23 +517,30 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
 
             if verbose > 0:
                 print(('-' * 10 + 'Iter = %d' + '-' * 10) % (it + 1))
-                print('Loss = %f' % mean_loss)
+                print('Loss = %f' % current_mean_loss)
                 print('Variable usage = %.2f%%' % current_variable_usage)
-                print('No change count = %d' % no_change_count)
+                print('No change count = %d' % (no_change_count + 1))
+                print('No change count loss = %d' % (no_change_count_loss + 1))
+
 
             # early stoppingの仕方を決める
             if tolerance==0:
                 print('tolerance is None')
                 # Check for early stopping.
-                if mean_loss < best_loss:
-                    best_loss = mean_loss
+                if current_mean_loss < best_loss:
+                    best_loss = current_mean_loss
                     best_it = it
                     best_model = deepcopy(cmlp)
                     # variable_usageが変化しない場合の早期停止
-                    if no_change_count >= stop_no_change_count + 1:
+                    if no_change_count >= stop_no_change_count:
                         if verbose:
                             print(f'Stopping early due to no change in variable usage for {stop_no_change_count} iterations')
                         break
+                    if no_change_count_loss > stop_no_change_count_loss:
+                        if verbose:
+                            print(f'Stopping early due to no change in mean_loss for more than {stop_no_change_count_loss} iterations')
+                        break                    
+
                 # 上のif文がFalseだったときに以下を実行
                 # もし最初のmean_lossがinfだった場合、上のif文は回らず
                 # best_it = Noneの初期値のまま以下のelif文が回ることになる。

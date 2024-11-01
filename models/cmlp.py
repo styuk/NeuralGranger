@@ -524,8 +524,6 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                 elif (it - best_it) == stopit:
                     if verbose:
                         print('Stopping early')
-                    break 
-
                 # variable_usageが変化しない場合の早期停止
                 elif no_change_count >= stop_no_change_count:
                     if verbose:

@@ -448,7 +448,7 @@ def train_model_adam(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
 
 
 def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
-                     lookback=5, check_every=100, verbose=1,tolerance=0,stopit=300,stop_count=10000,stop_count_loss=5000):
+                     lookback=5, check_every=100, verbose=1,tolerance=0,stopit=300,stop_count=10000,stop_count_loss=5000,diff=0.000001):
     '''Train model with Adam.'''
     lag = cmlp.lag
     p = X.shape[-1]
@@ -495,8 +495,6 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
         mean_loss = (smooth + nonsmooth) / p
         train_loss_list.append(mean_loss.detach())        
 
-
-
         current_variable_usage = 100 * torch.mean(cmlp.GC().float())
         current_mean_loss = mean_loss.item()  # Tensorをスカラーに変換
 
@@ -508,7 +506,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
         prev_variable_usage = current_variable_usage  # 次のループのために更新
 
         ########## mean_lossの変化をチェック ################
-        if 'prev_mean_loss' in locals() and abs(current_mean_loss - prev_mean_loss) <= 0.0000001:
+        if 'prev_mean_loss' in locals() and abs(current_mean_loss - prev_mean_loss) <= diff:
             no_change_count_loss += 1
         else:
             no_change_count_loss = 0  # 変化があればリセット
@@ -523,28 +521,26 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                 print(('-' * 10 + 'Iter = %d' + '-' * 10) % (it + 1))
                 print('Loss = %f' % current_mean_loss)
                 print('Variable usage = %.2f%%' % current_variable_usage)
-                print('No change count = %d' % (no_change_count + 1))
+                #print('No change count = %d' % (no_change_count + 1))
                 print('No change count loss = %d' % (no_change_count_loss + 1))
 
 
             # early stoppingの仕方を決める
             if tolerance==0:
-                print('tolerance is None')
                 # Check for early stopping.
                 if current_mean_loss < best_loss:
                     best_loss = current_mean_loss
                     best_it = it
                     best_model = deepcopy(cmlp)
                     # variable_usageが変化しない場合の早期停止
-                    if no_change_count >= stop_no_change_count:
-                        if verbose:
-                            print(f'Stopping early due to no change in variable usage for {stop_no_change_count} iterations')
-                        break
+                    #if no_change_count >= stop_no_change_count:
+                    #    if verbose:
+                    #        print(f'Stopping early due to no change in variable usage for {stop_no_change_count} iterations')
+                    #    break
                     if no_change_count_loss > stop_no_change_count_loss:
                         if verbose:
                             print(f'Stopping early due to no change in mean_loss for more than {stop_no_change_count_loss} iterations')
                         break                    
-
                 # 上のif文がFalseだったときに以下を実行
                 # もし最初のmean_lossがinfだった場合、上のif文は回らず
                 # best_it = Noneの初期値のまま以下のelif文が回ることになる。
@@ -553,19 +549,19 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                     if verbose:
                         print('Stopping early')
 
-            else:
-                print('tolerance = %f' % tolerance)
+            #else:
+            #    print('tolerance = %f' % tolerance)
                 # Check for early stopping
-                if mean_loss < best_loss:
-                    best_loss = mean_loss
-                    best_it = it
-                    best_model = deepcopy(cmlp)
+            #    if mean_loss < best_loss:
+            #        best_loss = mean_loss
+            #        best_it = it
+            #        best_model = deepcopy(cmlp)
                     
                 # 定数を下回った場合は停止
-                if mean_loss - best_loss <= tolerance:
-                    if verbose:
-                        print('Loss threshold reached, stopping early')
-                        break
+            #    if mean_loss - best_loss <= tolerance:
+            #        if verbose:
+            #            print('Loss threshold reached, stopping early')
+            #            break
 
     # Restore best model.
     restore_parameters(cmlp, best_model)

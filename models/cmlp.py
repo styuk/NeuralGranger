@@ -459,6 +459,8 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
     best_it = None
     best_loss = np.inf
     best_model = None
+    no_change_count = 0  # variable_usageが変化しない回数をカウント
+    stop_no_change_count = stop_count  # 停止条件としての無変化回数の閾値
 
     # Calculate smooth error.
     loss = sum([loss_fn(cmlp.networks[i](X[:, :-1]), X[:, lag:, i:i+1])
@@ -484,6 +486,15 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                     for i in range(p)])
         ridge = sum([ridge_regularize(net, lam_ridge) for net in cmlp.networks])
         smooth = loss + ridge
+        current_variable_usage = 100 * torch.mean(cmlp.GC().float())
+
+        # variable_usageの変化をチェック
+        if 'prev_variable_usage' in locals() and current_variable_usage == prev_variable_usage:
+            no_change_count += 1
+        else:
+            no_change_count = 0  # 変化があればリセット
+        prev_variable_usage = current_variable_usage  # 次のループのために更新
+        print('No change count = %f' % no_change_count)
 
         # Check progress.
         if (it + 1) % check_every == 0:
@@ -492,24 +503,12 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                              for net in cmlp.networks])
             mean_loss = (smooth + nonsmooth) / p
             train_loss_list.append(mean_loss.detach())
-            
-            no_change_count = 0  # variable_usageが変化しない回数をカウント
-            stop_no_change_count = stop_count  # 停止条件としての無変化回数の閾値
 
             if verbose > 0:
                 print(('-' * 10 + 'Iter = %d' + '-' * 10) % (it + 1))
                 print('Loss = %f' % mean_loss)
-                current_variable_usage = 100 * torch.mean(cmlp.GC().float())
                 print('Variable usage = %.2f%%' % current_variable_usage)
 
-            # variable_usageの変化をチェック
-            if 'prev_variable_usage' in locals() and current_variable_usage == prev_variable_usage:
-                no_change_count += 1
-            else:
-                no_change_count = 0  # 変化があればリセット
-            prev_variable_usage = current_variable_usage  # 次のループのために更新
-            print('No change count = %.2f%%' % no_change_count)
-            
             # early stoppingの仕方を決める
             if tolerance==0:
                 print('tolerance is None')

@@ -448,7 +448,7 @@ def train_model_adam(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
 
 
 def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
-                     lookback=5, check_every=100, verbose=1, diag=0):
+                     lookback=5, check_every=100, verbose=1,tolerance=0):
     '''Train model with Adam.'''
     lag = cmlp.lag
     p = X.shape[-1]
@@ -465,10 +465,6 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                 for i in range(p)])
     ridge = sum([ridge_regularize(net, lam_ridge) for net in cmlp.networks])
     smooth = loss + ridge
-
-    print('loss = %f' % loss)
-    print('smooth = %f' % smooth)
-    print('ridge = %f' % ridge)
 
     for it in range(max_iter):
         # Take gradient step.
@@ -489,7 +485,6 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
         ridge = sum([ridge_regularize(net, lam_ridge) for net in cmlp.networks])
         smooth = loss + ridge
 
-
         # Check progress.
         if (it + 1) % check_every == 0:
             # Add nonsmooth penalty.
@@ -500,35 +495,42 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
 
             if verbose > 0:
                 print(('-' * 10 + 'Iter = %d' + '-' * 10) % (it + 1))
-                print('mean_loss =\n', mean_loss)
-                print('cmlp.GC() =\n', cmlp.GC())
+                print('Loss = %f' % mean_loss)
                 print('Variable usage = %.2f%%'
                       % (100 * torch.mean(cmlp.GC().float())))
             
-
-            # Check for diagonal elements
-            gc_tensor = cmlp.GC()
-            diagonal_elements = gc_tensor.diagonal()  # 対角要素を取得
-            # Save model before diagonal elements become zero
-            if diag==1:
-                if (diagonal_elements == 0).any():  # もし0があれば
+            # early stoppingの仕方を決める
+            if tolerance=0:
+                # Check for early stopping.
+                if round(mean_loss, 7) < round(best_loss, 7):
+                    best_loss = mean_loss
+                    best_it = it
+                    best_model = deepcopy(cmlp)
+                # 上のif文がFalseだったときに以下を実行
+                # もし最初のmean_lossがinfだった場合、上のif文は回らず
+                # best_it = Noneの初期値のまま以下のelif文が回ることになる。
+                # そうなるとエラーが発生する。
+                elif (it - best_it) == lookback * check_every:
                     if verbose:
-                        print('Diagonal elements became zero, stopping iteration.')
-                    break  # ループを終了
-                else:
-                    # 対角成分が0にならない場合はモデルを保存
-                    best_model = deepcopy(cmlp)  # ここで保存する
-            
-            # Check for early stopping.
-            if mean_loss < best_loss:
-                best_loss = mean_loss
-                best_it = it
-            # best_model = deepcopy(cmlp)  # ここでは保存しない
-            elif (it - best_it) == lookback * check_every:
-                if verbose:
-                    print('Stopping early')
-                break
+                        print('Stopping early')
+                    break
+            else:
+                # Check for early stopping
+                if round(mean_loss, 7) < round(best_loss, 7):
+                    best_loss = mean_loss
+                    best_it = it
+                    best_model = deepcopy(cmlp)
+                    
+                # 定数を下回った場合は停止
+                if mean_loss - best_loss <= tolerance:
+                    if verbose:
+                        print('Loss threshold reached, stopping early')
+                        break
 
+    # Restore best model.
+    restore_parameters(cmlp, best_model)
+
+    return train_loss_list
     # Restore best model.
     restore_parameters(cmlp, best_model)
 

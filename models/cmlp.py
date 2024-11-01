@@ -513,17 +513,14 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
         prev_mean_loss = current_mean_loss  # 次のループのために更新
         
         
-        # Check progress. 
+        # Check progress
         if (it + 1) % check_every == 0:
-
-
             if verbose > 0:
                 print(('-' * 10 + 'Iter = %d' + '-' * 10) % (it + 1))
                 print('Loss = %f' % current_mean_loss)
                 print('Variable usage = %.2f%%' % current_variable_usage)
                 #print('No change count = %d' % (no_change_count + 1))
-                print('No change count loss = %d' % (no_change_count_loss + 1))
-
+                print('No change count loss = %d' % (no_change_count_loss))
 
             # early stoppingの仕方を決める
             if tolerance==0:
@@ -566,11 +563,8 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
     # Restore best model.
     restore_parameters(cmlp, best_model)
 
-    return train_loss_list
-    # Restore best model.
-    restore_parameters(cmlp, best_model)
+    return train_loss_list, cmlp.GC()
 
-    return train_loss_list
 
 
 def train_unregularized(cmlp, X, lr, max_iter, lookback=5, check_every=100,

@@ -494,9 +494,8 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
         else:
             no_change_count = 0  # 変化があればリセット
         prev_variable_usage = current_variable_usage  # 次のループのために更新
-        print('No change count = %f' % no_change_count)
-
-        # Check progress.
+        
+        # Check progress. 
         if (it + 1) % check_every == 0:
             # Add nonsmooth penalty.
             nonsmooth = sum([regularize(net, lam, penalty)
@@ -508,6 +507,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                 print(('-' * 10 + 'Iter = %d' + '-' * 10) % (it + 1))
                 print('Loss = %f' % mean_loss)
                 print('Variable usage = %.2f%%' % current_variable_usage)
+                print('No change count = %f' % no_change_count)
 
             # early stoppingの仕方を決める
             if tolerance==0:

@@ -503,7 +503,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
             if tolerance==0:
                 print('tolerance is None')
                 # Check for early stopping.
-                if round(mean_loss, 7) < round(best_loss, 7):
+                if mean_loss < best_loss:
                     best_loss = mean_loss
                     best_it = it
                     best_model = deepcopy(cmlp)
@@ -518,7 +518,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
             else:
                 print('tolerance = %f' % tolerance)
                 # Check for early stopping
-                if round(mean_loss, 7) < round(best_loss, 7):
+                if mean_loss < best_loss:
                     best_loss = mean_loss
                     best_it = it
                     best_model = deepcopy(cmlp)

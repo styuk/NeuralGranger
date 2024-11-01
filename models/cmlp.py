@@ -488,9 +488,17 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                     for i in range(p)])
         ridge = sum([ridge_regularize(net, lam_ridge) for net in cmlp.networks])
         smooth = loss + ridge
+
+        # Add nonsmooth penalty.
+        nonsmooth = sum([regularize(net, lam, penalty)
+                         for net in cmlp.networks])
+        mean_loss = (smooth + nonsmooth) / p
+        train_loss_list.append(mean_loss.detach())        
+
+
+
         current_variable_usage = 100 * torch.mean(cmlp.GC().float())
         current_mean_loss = mean_loss.item()  # Tensorをスカラーに変換
-
 
         ######### variable_usageの変化をチェック ###############
         if 'prev_variable_usage' in locals() and current_variable_usage == prev_variable_usage:
@@ -509,11 +517,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
         
         # Check progress. 
         if (it + 1) % check_every == 0:
-            # Add nonsmooth penalty.
-            nonsmooth = sum([regularize(net, lam, penalty)
-                             for net in cmlp.networks])
-            mean_loss = (smooth + nonsmooth) / p
-            train_loss_list.append(mean_loss.detach())
+
 
             if verbose > 0:
                 print(('-' * 10 + 'Iter = %d' + '-' * 10) % (it + 1))

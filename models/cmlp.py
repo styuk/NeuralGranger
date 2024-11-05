@@ -3,7 +3,10 @@ import torch.nn as nn
 import numpy as np
 from copy import deepcopy
 from models.model_helper import activation_helper
+import torch.nn.init as init
 
+# シードの固定
+torch.manual_seed(42)
 
 class MLP(nn.Module):
     def __init__(self, num_series, lag, hidden, activation):
@@ -12,10 +15,14 @@ class MLP(nn.Module):
 
         # Set up network.
         layer = nn.Conv1d(num_series, hidden[0], lag)
+        init.xavier_uniform_(layer.weight)  # 重みの初期化
+        nn.init.zeros_(layer.bias)          # バイアスの初期化
         modules = [layer]
 
         for d_in, d_out in zip(hidden, hidden[1:] + [1]):
             layer = nn.Conv1d(d_in, d_out, 1)
+            init.xavier_uniform_(layer.weight)  # 重みの初期化
+            nn.init.zeros_(layer.bias)          # バイアスの初期化
             modules.append(layer)
 
         # Register parameters.

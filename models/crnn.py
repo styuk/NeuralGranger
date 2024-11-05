@@ -3,6 +3,10 @@ import torch.nn as nn
 import numpy as np
 from copy import deepcopy
 
+import torch.nn.init as init
+
+# シードの固定
+torch.manual_seed(0)
 
 class RNN(nn.Module):
     def __init__(self, num_series, hidden, nonlinearity):
@@ -18,10 +22,17 @@ class RNN(nn.Module):
         self.hidden = hidden
 
         # Set up network.
-        self.rnn = nn.RNN(num_series, hidden, nonlinearity=nonlinearity,
-                          batch_first=True)
-        self.rnn.flatten_parameters()
+        self.rnn = nn.RNN(num_series, hidden, nonlinearity=nonlinearity, batch_first=True)
+        init.xavier_uniform_(self.rnn.weight_ih_l0)  # 入力から隠れ層への重みの初期化
+        init.orthogonal_(self.rnn.weight_hh_l0)      # 隠れ層間の重みの初期化
+        nn.init.zeros_(self.rnn.bias_ih_l0)          # 入力バイアスの初期化
+        nn.init.zeros_(self.rnn.bias_hh_l0)          # 隠れ層バイアスの初期化
+
+        # Conv1d layer
         self.linear = nn.Conv1d(hidden, 1, 1)
+        init.xavier_uniform_(self.linear.weight)     # Conv1d重みの初期化
+        nn.init.zeros_(self.linear.bias)             # Conv1dバイアスの初期化
+
 
     def init_hidden(self, batch):
         '''Initialize hidden states for RNN cell.'''

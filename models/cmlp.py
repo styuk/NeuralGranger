@@ -553,6 +553,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                 elif (it - best_it) >= lookback * check_every:
                     if verbose:
                         print('Stopping early')
+                    break                                   
 
             #else:
             #    print('tolerance = %f' % tolerance)

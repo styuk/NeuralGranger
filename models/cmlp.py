@@ -550,10 +550,11 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                 # もし最初のmean_lossがinfだった場合、上のif文は回らず
                 # best_it = Noneの初期値のまま以下のelif文が回ることになる。
                 # そうなるとエラーが発生する。
-                elif (it - best_it) >= lookback * check_every:
-                    if verbose:
-                        print('Stopping early')
-                    break                                   
+                if best_it is not None:
+                    if (it - best_it) >= lookback * check_every:
+                        if verbose:
+                            print('Stopping early')
+                        break                                   
 
             #else:
             #    print('tolerance = %f' % tolerance)

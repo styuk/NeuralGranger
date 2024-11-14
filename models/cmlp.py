@@ -532,19 +532,20 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
             # early stoppingの仕方を決める
             if tolerance==0:
                 # Check for early stopping.
+                # もし今回のmean_lossがbest_lossより小さい場合、現状のモデルが改善されたと見なされます。
                 if current_mean_loss < best_loss:
                     best_loss = current_mean_loss
                     best_it = it
                     best_model = deepcopy(cmlp)
+                elif no_change_count_loss > stop_no_change_count_loss:
+                    if verbose:
+                        print(f'Stopping early due to no change in mean_loss for more than {stop_no_change_count_loss} iterations')
+                    break              
                     # variable_usageが変化しない場合の早期停止
                     #if no_change_count >= stop_no_change_count:
                     #    if verbose:
                     #        print(f'Stopping early due to no change in variable usage for {stop_no_change_count} iterations')
                     #    break
-                    if no_change_count_loss > stop_no_change_count_loss:
-                        if verbose:
-                            print(f'Stopping early due to no change in mean_loss for more than {stop_no_change_count_loss} iterations')
-                        break                    
                 # 上のif文がFalseだったときに以下を実行
                 # もし最初のmean_lossがinfだった場合、上のif文は回らず
                 # best_it = Noneの初期値のまま以下のelif文が回ることになる。

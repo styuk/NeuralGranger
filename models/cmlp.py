@@ -455,7 +455,7 @@ def train_model_adam(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
 
 
 def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
-                     lookback=5, check_every=100, verbose=1,tolerance=0,stopit=300,stop_count=10000,stop_count_loss=5000,diff=0.000001):
+                     lookback=1, check_every=100, verbose=1,tolerance=0,stopit=300,stop_count=10000,stop_count_loss=5000,diff=0.000001):
     '''Train model with Adam.'''
     lag = cmlp.lag
     p = X.shape[-1]
@@ -550,7 +550,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                 # もし最初のmean_lossがinfだった場合、上のif文は回らず
                 # best_it = Noneの初期値のまま以下のelif文が回ることになる。
                 # そうなるとエラーが発生する。
-                elif (it - best_it) == stopit:
+                elif (it - best_it) >= lookback * check_every:
                     if verbose:
                         print('Stopping early')
 

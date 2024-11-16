@@ -537,10 +537,10 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                     best_loss = current_mean_loss
                     best_it = it
                     best_model = deepcopy(cmlp)
-                elif no_change_count_loss > stop_no_change_count_loss:
-                    if verbose:
-                        print(f'Stopping early due to no change in mean_loss for more than {stop_no_change_count_loss} iterations')
-                    break              
+                    if no_change_count_loss > stop_no_change_count_loss:
+                        if verbose:
+                            print(f'Stopping early due to no change in mean_loss for more than {stop_no_change_count_loss} iterations')
+                        break              
                     # variable_usageが変化しない場合の早期停止
                     #if no_change_count >= stop_no_change_count:
                     #    if verbose:

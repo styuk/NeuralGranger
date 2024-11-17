@@ -510,7 +510,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
             no_change_count += 1
         else:
             no_change_count = 0  # 変化があればリセット
-        prev_variable_usage = current_variable_usage  # 次のループのために更新
+            prev_variable_usage = current_variable_usage  # 次のループのために更新
 
         ########## mean_lossの変化をチェック ################
         if 'prev_mean_loss' in locals() and abs(current_mean_loss - prev_mean_loss) <= diff:

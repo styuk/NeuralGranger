@@ -526,7 +526,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
                 print(('-' * 10 + 'Iter = %d' + '-' * 10) % (it + 1))
                 print('Loss = %f' % current_mean_loss)
                 print('Variable usage = %.2f%%' % current_variable_usage)
-                #print('No change count = %d' % (no_change_count + 1))
+                print('prev_variable_usage is minimum = %d' % (prev_variable_usage))
                 print('No change count loss = %d' % (no_change_count_loss))
 
             # early stoppingの仕方を決める

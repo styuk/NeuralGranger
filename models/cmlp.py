@@ -506,7 +506,7 @@ def train_model_ista(cmlp, X, lr, max_iter, lam=0, lam_ridge=0, penalty='H',
         current_mean_loss = mean_loss.item()  # Tensorをスカラーに変換
 
         ######### variable_usageの変化をチェック ###############
-        if 'prev_variable_usage' in locals() and current_variable_usage == prev_variable_usage:
+        if 'prev_variable_usage' in locals() and current_variable_usage >= prev_variable_usage:
             no_change_count += 1
         else:
             no_change_count = 0  # 変化があればリセット
